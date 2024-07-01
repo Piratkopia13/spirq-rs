@@ -1,0 +1,90 @@
+{
+  "EntryPoint": "main",
+  "ExecutionModel": "Fragment",
+  "ExecutionModes": [
+    {
+      "ExecutionMode": "OriginUpperLeft",
+      "Operands": []
+    }
+  ],
+  "Variables": {
+    "Inputs": [
+      {
+        "Name": "color1",
+        "Location": 0,
+        "Component": 0,
+        "Type": "vec4<f32>"
+      },
+      {
+        "Name": "color2",
+        "Location": 2,
+        "Component": 0,
+        "Type": "vec4<f32>"
+      },
+      {
+        "Name": "multiplier",
+        "Location": 1,
+        "Component": 0,
+        "Type": "vec4<f32>"
+      }
+    ],
+    "Outputs": [
+      {
+        "Name": "color",
+        "Location": 0,
+        "Component": 0,
+        "Type": "vec4<f32>"
+      }
+    ],
+    "Descriptors": [
+      {
+        "Name": null,
+        "Set": 0,
+        "Binding": 0,
+        "DescriptorType": "UniformBuffer",
+        "Type": {
+          "Kind": "Struct",
+          "Members": [
+            {
+              "Name": "s",
+              "Offset": 0,
+              "MemberType": {
+                "Kind": "Struct",
+                "Members": [
+                  {
+                    "Name": "b",
+                    "Offset": 0,
+                    "MemberType": "u32"
+                  },
+                  {
+                    "Name": "v",
+                    "Offset": 16,
+                    "MemberType": {
+                      "Kind": "Array",
+                      "ElementType": "vec4<f32>",
+                      "Count": 5,
+                      "Stride": 16
+                    }
+                  },
+                  {
+                    "Name": "i",
+                    "Offset": 96,
+                    "MemberType": "i32"
+                  }
+                ]
+              }
+            },
+            {
+              "Name": "cond",
+              "Offset": 112,
+              "MemberType": "u32"
+            }
+          ]
+        },
+        "Count": 1
+      }
+    ],
+    "PushConstants": [],
+    "SpecConstants": []
+  }
+}

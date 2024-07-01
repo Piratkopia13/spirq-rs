@@ -2,23 +2,58 @@ name: Rust
 
 on:
   push:
-    branches: [ master ]
+    branches: [ "master" ]
   pull_request:
-    branches: [ master ]
+    branches: [ "master" ]
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  build_and_test:
+    name: Build and Test
 
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - name: rust-toolchain
-      uses: actions-rs/toolchain@v1.0.6
-    - name: Build
-      run: cargo build --verbose
-    - name: Run tests
-      run: cargo test --verbose
+    - uses: actions/checkout@v3
+    - run: rustup toolchain install stable --profile minimal
+    - uses: Swatinem/rust-cache@v2
+      with:
+        cache-on-failure: true
+        workspaces: |
+          shader-reflect
+          spirq
+
+    - name: Cargo Format
+      id: cargo_format
+      run: |
+        cargo fmt -- --check
+
+    - name: Cargo Build
+      id: cargo_build
+      run: |
+        cargo build --verbose
+
+    - name: Cargo Test
+      id: cargo_test
+      run: |
+        cargo test --verbose
+
+    - name: Run SPIR-Q Examples
+      id: spirq_examples
+      run: |
+        cargo run --example gallery > spirq/examples/gallery/main.log
+        cargo run --example inspect > spirq/examples/inspect/main.log
+        cargo run --example walk > spirq/examples/walk/main.log
+
+    - name: Run shader-reflect
+      id: shader_reflect
+      run: |
+        cargo run -p shader-reflect assets/gallery.frag -o assets/gallery.frag.json --reference-all-resources
+        cargo run -p shader-reflect assets/gallery.frag.spv -o assets/gallery.frag.spv.json --reference-all-resources
+        diff assets/gallery.frag.json assets/gallery.frag.spv.json
+        cargo run -p shader-reflect assets/spirv-spec.frag -o assets/spirv-spec.frag.json
+        cargo run -p shader-reflect assets/spirv-spec.frag.spv -o assets/spirv-spec.frag.spv.json
+        diff assets/spirv-spec.frag.json assets/spirv-spec.frag.spv.json
+        cargo run -p shader-reflect assets/moon.spv -o assets/moon.spv.json --reference-all-resources

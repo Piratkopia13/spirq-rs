@@ -1,34 +1,43 @@
+use spq_core::error::anyhow;
 use std::convert::TryFrom;
-use std::marker::PhantomData;
-use spirv_headers::{Dim, ExecutionMode, StorageClass};
-use super::{Error, Result};
-use super::parse::{Instr};
 
-pub use spirv_headers::{ExecutionModel, ImageFormat};
+use crate::{parse::Instr, spirv::*};
 
-pub type InstrId = u32;
-pub type FunctionId = InstrId;
-pub type TypeId = InstrId;
-pub type VariableId = InstrId;
-pub type ConstantId = InstrId;
-pub type SpecConstantId = InstrId;
+type InstrId = u32;
+type FunctionId = InstrId;
+type TypeId = InstrId;
+type VariableId = InstrId;
+type ConstantId = InstrId;
+type SpecConstantId = InstrId;
 
-pub type MemberIdx = u32;
+type MemberIdx = u32;
 
+#[macro_export]
 macro_rules! define_ops {
-    ($($opcode:ident { $($field:ident: $type:ty = $read_fn:ident(),)+ })+) => {
+    (read_enum: $type:ty: $operands:expr) => {
+        {
+            <$type>::from_u32($operands.read_u32()?)
+                .ok_or_else(|| anyhow!("invalid enum value"))?
+        }
+    };
+    ($read_fn:ident: $type:ty: $operands:expr) => {
+        {
+            $operands.$read_fn()?
+        }
+    };
+    ($($opcode:ident { $($field:ident: $type:ty = $read_fn:tt(),)+ })+) => {
         $(
             pub struct $opcode<'a> {
                 $( pub $field: $type, )*
-                _ph: PhantomData<&'a ()>,
+                _ph: ::std::marker::PhantomData<&'a ()>,
             }
-            impl<'a> TryFrom<&Instr<'a>> for $opcode<'a> {
-                type Error = Error;
-                fn try_from(instr: &Instr<'a>) -> Result<Self> {
+            impl<'a> TryFrom<&'a Instr> for $opcode<'a> {
+                type Error = ::spq_core::error::Error;
+                fn try_from(instr: &'a Instr) -> ::spq_core::error::Result<Self> {
                     let mut operands = instr.operands();
                     let op = $opcode {
-                        $( $field: operands.$read_fn()?, )+
-                        _ph: PhantomData,
+                        $( $field: define_ops!($read_fn: $type: operands), )+
+                        _ph: ::std::marker::PhantomData,
                     };
                     Ok(op)
                 }
@@ -38,14 +47,24 @@ macro_rules! define_ops {
 }
 
 // Be aware that the order of the read methods is important.
-define_ops!{
+define_ops! {
+    OpExtInstImport {
+        instr_set_id: InstrId = read_u32(),
+        name: &'a str = read_str(),
+    }
+
+    OpMemoryModel {
+        addr_model: AddressingModel = read_enum(),
+        mem_model: MemoryModel = read_enum(),
+    }
+
     OpEntryPoint {
         exec_model: ExecutionModel = read_enum(),
         func_id: FunctionId = read_u32(),
         name: &'a str = read_str(),
     }
 
-    OpExecutionMode {
+    OpExecutionModeCommonSPQ {
         func_id: FunctionId = read_u32(),
         execution_mode: ExecutionMode = read_enum(),
         params: &'a [u32] = read_list(),
@@ -63,13 +82,13 @@ define_ops!{
 
     OpDecorate {
         target_id: InstrId = read_u32(),
-        deco: u32 = read_enum(),
+        deco: Decoration = read_enum(),
         params: &'a [u32] = read_list(),
     }
     OpMemberDecorate {
         target_id: InstrId = read_u32(),
         member_idx: MemberIdx = read_u32(),
-        deco: u32 = read_enum(),
+        deco: Decoration = read_enum(),
         params: &'a [u32] = read_list(),
     }
 
@@ -81,12 +100,12 @@ define_ops!{
     }
     OpTypeInt {
         ty_id: TypeId = read_u32(),
-        nbyte: u32 = read_u32(),
+        bits: u32 = read_u32(),
         is_signed: bool = read_bool(),
     }
     OpTypeFloat {
         ty_id: TypeId = read_u32(),
-        nbyte: u32 = read_u32(),
+        bits: u32 = read_u32(),
     }
     OpTypeVector {
         ty_id: TypeId = read_u32(),
@@ -95,8 +114,8 @@ define_ops!{
     }
     OpTypeMatrix {
         ty_id: TypeId = read_u32(),
-        vec_ty_id: TypeId = read_u32(),
-        nvec: u32 = read_u32(),
+        vector_ty_id: TypeId = read_u32(),
+        nvector: u32 = read_u32(),
     }
     OpTypeImage {
         ty_id: TypeId = read_u32(),
@@ -113,16 +132,16 @@ define_ops!{
     }
     OpTypeSampledImage {
         ty_id: TypeId = read_u32(),
-        img_ty_id: TypeId = read_u32(),
+        image_ty_id: TypeId = read_u32(),
     }
     OpTypeArray {
         ty_id: TypeId = read_u32(),
-        proto_ty_id: TypeId = read_u32(),
-        nrepeat_const_id: ConstantId = read_u32(),
+        element_ty_id: TypeId = read_u32(),
+        nelement_const_id: ConstantId = read_u32(),
     }
     OpTypeRuntimeArray {
         ty_id: TypeId = read_u32(),
-        proto_ty_id: TypeId = read_u32(),
+        element_ty_id: TypeId = read_u32(),
     }
     OpTypeStruct {
         ty_id: TypeId = read_u32(),
@@ -230,5 +249,8 @@ define_ops!{
         a_id: SpecConstantId = read_u32(),
         b_id: SpecConstantId = read_u32(),
         c_id: SpecConstantId = read_u32(),
+    }
+    OpTypeRayQueryKHR {
+        ty_id: TypeId = read_u32(),
     }
 }

@@ -1,5 +1,73 @@
 # Change Log
 
+## v1.2.1
+
+- Fixed compatibility with non-semantics extension instructions. (#138)
+
+## v1.2.0
+
+- Separated `spirq-` family of subcrates to [`spq`](https://github.com/PENGUINLIONG/spq-rs)
+
+
+## v1.1.2
+
+- Fixed compatibility with `spirv` v0.3. (#130)
+- Properly support mesh shader reflection. (#127)
+- From this version SPIR-Q is renamed to spirq (all lower case).
+
+## v1.1.1
+
+- Better readme.
+- Support reading from stdin in `spirq-as` and `spirq-dis`.
+
+## v1.1.0
+
+- Identify depth images via `SampledImageType`.
+- New instruction iterator interface.
+
+
+## v1.0.2
+
+- Supported explicitly typed constant. (#118)
+
+## v1.0.1
+
+- Fixed resource reference analysis in function calls. (#115)
+- Infer types for specialization constants. (#114)
+
+## v1.0.0
+
+- Celebrate SPIR-Q v1.0! 🎉
+- Major refactorization. Separated foundational structures and routines to `spirq-core` which might be a part of other projects in the future.
+
+
+## v0.6.4
+
+- Fixed access analysis on DXC outputs. (#105)
+
+## v0.6.3
+
+- Fixed that shader reflection is bypassed when the SPIR-V has no debug ops. (#102)
+
+## v0.6.2
+
+- Supported type `RayQueryEXT`. (#100)
+
+## v0.6.1
+
+- Fixed variable order varies between runs.
+- `spirq-reflect` is renamed to `shader-reflect`.
+- Supported GLSL/HLSL reflection in `shader-reflect`.
+
+## v0.6.0
+
+SPIR-Q v0.6 has undergone a massive type system refactorization to get rid of many historical design issues.
+
+- Fixed crash due to absence of matrix stride. (#84)
+- Major type system refactorization; lots of breaking changes. (#80)
+- For the first time we have a CLI driver `spirq-reflect`!
+
+
 ## v0.5.1
 
 - Supported reflection-time specialization constant expression evaluation. (#77)
